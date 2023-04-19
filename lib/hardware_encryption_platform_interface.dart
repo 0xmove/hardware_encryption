@@ -8,7 +8,8 @@ abstract class HardwareEncryptionPlatform extends PlatformInterface {
 
   static final Object _token = Object();
 
-  static HardwareEncryptionPlatform _instance = MethodChannelHardwareEncryption();
+  static HardwareEncryptionPlatform _instance =
+      MethodChannelHardwareEncryption();
 
   /// The default instance of [HardwareEncryptionPlatform] to use.
   ///
@@ -23,11 +24,15 @@ abstract class HardwareEncryptionPlatform extends PlatformInterface {
     _instance = instance;
   }
 
-  Future<String> encrypt(String encryptText) async {
+  Future<String> encrypt(String tag, String encryptText) async {
     throw UnimplementedError('function encrypt has not been implemented.');
   }
 
-  Future<String> decrypt(String decryptText) async {
+  Future<String> decrypt(String tag, String decryptText) async {
     throw UnimplementedError('function decrypt has not been implemented.');
+  }
+
+  Future<bool> removeKey(String tag) async {
+    throw UnimplementedError('function removeKey has not been implemented.');
   }
 }

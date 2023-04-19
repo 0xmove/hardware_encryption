@@ -19,8 +19,11 @@ class _MyAppState extends State<MyApp> {
 
   var _text1 = '';
   var _text2 = '';
+  var _text3 = '';
 
   var msg = '0x0000';
+
+  var tag = 'hardwareEncryption';
 
   @override
   Widget build(BuildContext context) {
@@ -38,8 +41,9 @@ class _MyAppState extends State<MyApp> {
               const SizedBox(height: 15),
               ElevatedButton(
                 onPressed: () async {
-                  _text1 = await _hardwareEncryption.encrypt(msg);
+                  _text1 = await _hardwareEncryption.encrypt(tag, msg);
                   setState(() {});
+                  print(_text1);
                 },
                 child: const Text('encrypt'),
               ),
@@ -56,6 +60,18 @@ class _MyAppState extends State<MyApp> {
               ),
               const SizedBox(height: 15),
               Text(_text2),
+              const SizedBox(height: 15),
+              ElevatedButton(
+                onPressed: () async {
+                  final result = await _hardwareEncryption.removeKey(tag);
+                  setState(() {
+                    _text3 = 'removeKey $result';
+                  });
+                },
+                child: const Text('remove'),
+              ),
+              const SizedBox(height: 15),
+              Text(_text3),
             ],
           ),
         ),
@@ -64,12 +80,18 @@ class _MyAppState extends State<MyApp> {
   }
 
   _decrypt() async {
-    int delaySecond = 1;
+    int delaySecond = 0;
 
     /// It will fail if it exceeds the default time of 10 seconds
     Future.delayed(Duration(seconds: delaySecond), () async {
-      _text2 = await _hardwareEncryption.decrypt(_text1);
+      _text2 = await _hardwareEncryption.decrypt(tag, _text1);
       setState(() {});
     });
+  }
+
+  @override
+  void dispose() async {
+    await _hardwareEncryption.removeKey(tag);
+    super.dispose();
   }
 }

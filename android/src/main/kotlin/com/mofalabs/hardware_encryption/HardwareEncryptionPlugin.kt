@@ -2,6 +2,7 @@ package com.mofalabs.hardware_encryption
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.hardware.SensorManager.DynamicSensorCallback
 import android.os.Build
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
@@ -21,18 +22,16 @@ import javax.security.auth.x500.X500Principal
 @Suppress("DEPRECATION")
 class RsaKeyStoreKey(context: Context) {
 
-    private val keyAlias: String
     private val context: Context
     private val KEYSTORE_PROVIDER_ANDROID = "AndroidKeyStore"
 
     init {
-        this.keyAlias = context.packageName + ".hardware_encryption"
         this.context = context
-        createRSAKeysIfNeeded()
     }
 
     @Throws(Exception::class)
-    fun encrypt(input: ByteArray): ByteArray {
+    fun encrypt(keyAlias: String, input: ByteArray, password: String?): ByteArray {
+        createRSAKeysIfNeeded(keyAlias, password)
         val publicKey = getKeyStore().getCertificate(keyAlias).publicKey
         val cipher = getRSACipher()
         cipher.init(Cipher.ENCRYPT_MODE, publicKey)
@@ -40,8 +39,9 @@ class RsaKeyStoreKey(context: Context) {
     }
 
     @Throws(Exception::class)
-    fun decrypt(input: ByteArray): ByteArray {
-        val privateKey = getKeyStore().getKey(keyAlias, null)
+    fun decrypt(keyAlias: String, input: ByteArray, password: String?): ByteArray {
+        createRSAKeysIfNeeded(keyAlias, password)
+        val privateKey = getKeyStore().getKey(keyAlias, password?.toCharArray())
         val cipher = getRSACipher()
         cipher.init(Cipher.DECRYPT_MODE, privateKey)
         return cipher.doFinal(input)
@@ -70,7 +70,7 @@ class RsaKeyStoreKey(context: Context) {
     }
 
     @Throws(Exception::class)
-    private fun createRSAKeysIfNeeded() {
+    private fun createRSAKeysIfNeeded(keyAlias: String, password: String?) {
         val ks = KeyStore.getInstance(KEYSTORE_PROVIDER_ANDROID)
         ks.load(null)
 
@@ -81,7 +81,7 @@ class RsaKeyStoreKey(context: Context) {
         var publicKey: PublicKey? = null
         for (i in 1..5) {
             try {
-                privateKey = ks.getKey(keyAlias, null) as PrivateKey
+                privateKey = ks.getKey(keyAlias, password?.toCharArray()) as PrivateKey
                 publicKey = ks.getCertificate(keyAlias).publicKey
                 break
             } catch (ignored: Exception) {
@@ -89,22 +89,22 @@ class RsaKeyStoreKey(context: Context) {
         }
 
         if (privateKey == null || publicKey == null) {
-            createKeys()
+            createKeys(keyAlias)
             try {
-                privateKey = ks.getKey(keyAlias, null) as PrivateKey
+                privateKey = ks.getKey(keyAlias, password?.toCharArray()) as PrivateKey
                 publicKey = ks.getCertificate(keyAlias).publicKey
             } catch (ignored: Exception) {
                 ks.deleteEntry(keyAlias)
             }
             if (privateKey == null || publicKey == null) {
-                createKeys()
+                createKeys(keyAlias)
             }
         }
     }
 
     @SuppressLint("NewApi")
     @Throws(Exception::class)
-    private fun createKeys() {
+    private fun createKeys(keyAlias: String) {
         val start = Calendar.getInstance()
         val end = Calendar.getInstance()
         end.add(Calendar.YEAR, 25)
@@ -162,11 +162,21 @@ class HardwareEncryptionPlugin : FlutterPlugin, MethodCallHandler {
     override fun onMethodCall(@NonNull call: MethodCall, @NonNull result: Result) {
         when (call.method) {
             "encrypt" -> {
-                val data = rsaKeyStoreKey.encrypt(call.arguments as ByteArray)
+                val arguments = call.arguments as Map<*, *>
+                val data = rsaKeyStoreKey.encrypt(
+                    arguments["tag"] as String,
+                    arguments["message"] as ByteArray,
+                    arguments["password"] as String?,
+                )
                 result.success(data)
             }
             "decrypt" -> {
-                val data = rsaKeyStoreKey.decrypt(call.arguments as ByteArray)
+                val arguments = call.arguments as Map<*, *>
+                val data = rsaKeyStoreKey.decrypt(
+                    arguments["tag"] as String,
+                    arguments["message"] as ByteArray,
+                    arguments["password"] as String?,
+                )
                 result.success(data)
             }
             else -> {
