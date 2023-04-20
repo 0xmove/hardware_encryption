@@ -1,6 +1,8 @@
-import 'package:flutter/material.dart';
+import 'dart:io';
 
-import 'biometric_util.dart';
+import 'package:flutter/material.dart';
+import 'package:hardware_encryption/biometric_util.dart';
+
 import 'package:hardware_encryption/hardware_encryption.dart';
 
 void main() {
@@ -52,9 +54,7 @@ class _MyAppState extends State<MyApp> {
               const SizedBox(height: 15),
               ElevatedButton(
                 onPressed: () async {
-                  BiometricUtil.checkBiometrics(() {
-                    _decrypt();
-                  });
+                  _decrypt();
                 },
                 child: const Text('decrypt'),
               ),

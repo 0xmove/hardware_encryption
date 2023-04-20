@@ -24,8 +24,8 @@ public class HardwareEncryptionPlugin: NSObject, FlutterPlugin {
                 }
                 let encrypted = try encrypt(message: message, tag: tag, password: password)
                 result(encrypted)
-            } catch {
-                result(error)
+            } catch  {
+                result(nil)
             }
         case "decrypt":
             do{
@@ -39,7 +39,7 @@ public class HardwareEncryptionPlugin: NSObject, FlutterPlugin {
                 let decrypted = try decrypt(message: message.data, tag: tag, password: password)
                 result(decrypted)
             } catch {
-                result(error)
+                result(nil)
             }
         case "removeKey":
             do{
@@ -48,10 +48,10 @@ public class HardwareEncryptionPlugin: NSObject, FlutterPlugin {
                 let isSuccess = try removeKey(tag: tag)
                 result(isSuccess)
             } catch {
-                result(error)
+                result(nil)
             }
         default:
-            result("")
+            result(nil)
         }
     }
     
