@@ -1,8 +1,4 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:hardware_encryption/biometric_util.dart';
-
 import 'package:hardware_encryption/hardware_encryption.dart';
 
 void main() {

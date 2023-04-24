@@ -14,6 +14,7 @@ class MethodChannelHardwareEncryption extends HardwareEncryptionPlatform {
   final methodChannel = const MethodChannel(
       'com.mofalabs.hardware_encryption/hardware_encryption');
 
+  @override
   Future<String> encrypt(String tag, String encryptText) async {
     final result = await methodChannel.invokeMethod<dynamic>(
       'encrypt',
@@ -28,8 +29,12 @@ class MethodChannelHardwareEncryption extends HardwareEncryptionPlatform {
     return base64.encode(result);
   }
 
+  @override
   Future<String> decrypt(String tag, String decryptText) async {
-    if(await BiometricUtil.checkDecryptBiometrics()){
+      if (Platform.isAndroid) {
+        await BiometricUtil.checkBiometrics();
+      }
+      
       final result = await methodChannel.invokeMethod<dynamic>(
         'decrypt',
         {
@@ -43,11 +48,9 @@ class MethodChannelHardwareEncryption extends HardwareEncryptionPlatform {
       return Platform.isAndroid
           ? utf8.decode(result as Uint8List)
           : result.toString();
-    } else {
-      throw EncryptionError('check biometrics fail');
     }
-  }
 
+  @override
   Future<bool> removeKey(String tag) async {
     final result = await methodChannel.invokeMethod<dynamic>(
       'removeKey',
@@ -67,5 +70,6 @@ class EncryptionError extends Error {
   @pragma("vm:entry-point")
   EncryptionError(String this.message);
 
+  @override
   String toString() => "Encryption operation: $message";
 }
