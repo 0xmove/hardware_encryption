@@ -76,13 +76,21 @@ class _MyAppState extends State<MyApp> {
   }
 
   _decrypt() async {
-    int delaySecond = 0;
+    /*int delaySecond = 0;
 
     /// It will fail if it exceeds the default time of 10 seconds
     Future.delayed(Duration(seconds: delaySecond), () async {
       _text2 = await _hardwareEncryption.decrypt(tag, _text1);
       setState(() {});
-    });
+    });*/
+    try {
+      _text2 = await _hardwareEncryption.decrypt(tag, _text1);
+    } catch (e) {
+      if (e is EncryptionError && e.message == notSetError.message) {
+        /// do something
+        print(e);
+      }
+    }
   }
 
   @override

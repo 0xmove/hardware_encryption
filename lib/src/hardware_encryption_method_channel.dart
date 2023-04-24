@@ -5,6 +5,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 import 'biometric_util.dart';
+import 'encryption_error.dart';
+import 'hardware_encryption.dart';
 import 'hardware_encryption_platform_interface.dart';
 
 /// An implementation of [HardwareSecurityPlatform] that uses method channels.
@@ -31,24 +33,26 @@ class MethodChannelHardwareEncryption extends HardwareEncryptionPlatform {
 
   @override
   Future<String> decrypt(String tag, String decryptText) async {
-      if (Platform.isAndroid) {
-        await BiometricUtil.checkBiometrics();
-      }
-      
-      final result = await methodChannel.invokeMethod<dynamic>(
-        'decrypt',
-        {
-          "message": base64.decode(decryptText),
-          'tag': tag,
-        },
-      );
-      if (result == null) {
-        throw EncryptionError('decrypt fail');
-      }
-      return Platform.isAndroid
-          ? utf8.decode(result as Uint8List)
-          : result.toString();
+    if (!(await BiometricUtil.checkAvailableBiometrics())) {
+      throw notSetError;
     }
+    if (Platform.isAndroid) {
+      await BiometricUtil.checkBiometrics();
+    }
+    final result = await methodChannel.invokeMethod<dynamic>(
+      'decrypt',
+      {
+        "message": base64.decode(decryptText),
+        'tag': tag,
+      },
+    );
+    if (result == null) {
+      throw EncryptionError('decrypt fail');
+    }
+    return Platform.isAndroid
+        ? utf8.decode(result as Uint8List)
+        : result.toString();
+  }
 
   @override
   Future<bool> removeKey(String tag) async {
@@ -61,15 +65,4 @@ class MethodChannelHardwareEncryption extends HardwareEncryptionPlatform {
     }
     return result as bool;
   }
-}
-
-@pragma("vm:entry-point")
-class EncryptionError extends Error {
-  final String? message;
-
-  @pragma("vm:entry-point")
-  EncryptionError(String this.message);
-
-  @override
-  String toString() => "Encryption operation: $message";
 }
