@@ -19,9 +19,9 @@ class _MyAppState extends State<MyApp> {
   var _text2 = '';
   var _text3 = '';
 
-  var msg = '0x0000';
+  var msg = '反馈结果就发给';
 
-  var tag = 'hardwareEncryption';
+  var tag = 'sdfss5434';
 
   @override
   Widget build(BuildContext context) {
@@ -85,6 +85,7 @@ class _MyAppState extends State<MyApp> {
     });*/
     try {
       _text2 = await _hardwareEncryption.decrypt(tag, _text1);
+      setState(() {});
     } catch (e) {
       if (e is EncryptionError && e.message == notSetError.message) {
         /// do something
