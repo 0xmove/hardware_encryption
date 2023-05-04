@@ -19,9 +19,9 @@ class _MyAppState extends State<MyApp> {
   var _text2 = '';
   var _text3 = '';
 
-  var msg = '反馈结果就发给';
+  var msg = 'this is a test message';
 
-  var tag = 'sdfss5434';
+  var tag = 'demotagkey';
 
   @override
   Widget build(BuildContext context) {
@@ -76,21 +76,12 @@ class _MyAppState extends State<MyApp> {
   }
 
   _decrypt() async {
-    /*int delaySecond = 0;
-
-    /// It will fail if it exceeds the default time of 10 seconds
-    Future.delayed(Duration(seconds: delaySecond), () async {
-      _text2 = await _hardwareEncryption.decrypt(tag, _text1);
-      setState(() {});
-    });*/
     try {
       _text2 = await _hardwareEncryption.decrypt(tag, _text1);
-      setState(() {});
     } catch (e) {
-      if (e is EncryptionError && e.message == notSetError.message) {
-        /// do something
-        print(e);
-      }
+      _text2 = e.toString();
+    } finally {
+      setState(() { });
     }
   }
 

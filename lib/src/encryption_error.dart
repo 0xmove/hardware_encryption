@@ -6,5 +6,5 @@ class EncryptionError extends Error {
   EncryptionError(String this.message);
 
   @override
-  String toString() => "Encryption operation: $message";
+  String toString() => "Encryption error: $message";
 }
