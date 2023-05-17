@@ -3,6 +3,7 @@ package com.mofalabs.hardware_encryption
 import android.os.Build
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
+import android.security.keystore.StrongBoxUnavailableException
 import androidx.annotation.NonNull
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.MethodCall
@@ -31,16 +32,8 @@ class HardwareEncryptionPlugin : FlutterPlugin, MethodCallHandler {
     }
 
     private fun createRSAKeysIfNeeded(keyAlias: String, password: String?) {
-        var privateKey: PrivateKey? = null
-        var publicKey: PublicKey? = null
-        for (i in 1..5) {
-            try {
-                privateKey = keyStore.getKey(keyAlias, password?.toCharArray()) as PrivateKey
-                publicKey = keyStore.getCertificate(keyAlias).publicKey
-                break
-            } catch (ignored: Exception) {
-            }
-        }
+        var privateKey = keyStore.getKey(keyAlias, password?.toCharArray()) as PrivateKey
+        var publicKey = keyStore.getCertificate(keyAlias).publicKey
 
         if (privateKey == null || publicKey == null) {
             createKey(keyAlias)
@@ -56,47 +49,64 @@ class HardwareEncryptionPlugin : FlutterPlugin, MethodCallHandler {
         }
     }
 
-    private fun createKey(keyAlias: String): KeyPair {
-        val kpGenerator = KeyPairGenerator.getInstance(ALGORITHM)
-
-        val spec: AlgorithmParameterSpec
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            spec = KeyGenParameterSpec.Builder(
+    private fun createKeyPairWithStrongBox(keyAlias: String): KeyPair {
+        val spec = KeyGenParameterSpec.Builder(
                 keyAlias,
                 KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
-            )
-                .setBlockModes(BLOCK_MODE)
-                .setEncryptionPaddings(PADDING)
-                .setUserAuthenticationRequired(true)
-                .setRandomizedEncryptionRequired(false)
-                .setInvalidatedByBiometricEnrollment(true)
-                .setUserAuthenticationValidityDurationSeconds(10)
-                .setCertificateSubject(X500Principal("CN=$keyAlias"))
-                .setDigests(KeyProperties.DIGEST_SHA256)
-                .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_RSA_PKCS1)
-                .setCertificateSerialNumber(BigInteger.valueOf(1))
-                .build()
+        )
+        .setBlockModes(BLOCK_MODE)
+        .setEncryptionPaddings(PADDING)
+        .setRandomizedEncryptionRequired(false)
+        .setUserAuthenticationRequired(true)
+        .setUserAuthenticationValidityDurationSeconds(10)
+        .setCertificateSubject(X500Principal("CN=$keyAlias"))
+        .setDigests(KeyProperties.DIGEST_SHA256)
+        .setCertificateSerialNumber(BigInteger.valueOf(1))
+        .setIsStrongBoxBacked(true)
+        .setInvalidatedByBiometricEnrollment(false)
 
-        } else {
-            spec =
-                KeyGenParameterSpec.Builder(
-                    keyAlias,
-                    KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
-                )
-                    .setBlockModes(BLOCK_MODE)
-                    .setEncryptionPaddings(PADDING)
-                    .setUserAuthenticationRequired(true)
-                    .setRandomizedEncryptionRequired(false)
-                    .setUserAuthenticationValidityDurationSeconds(10)
-                    .setEncryptionPaddings(PADDING)
-                    .setCertificateSubject(X500Principal("CN=$keyAlias"))
-                    .setDigests(KeyProperties.DIGEST_SHA256)
-                    .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_RSA_PKCS1)
-                    .setCertificateSerialNumber(BigInteger.valueOf(1))
-                    .build()
-        }
-        kpGenerator.initialize(spec)
+        val kpGenerator = KeyPairGenerator.getInstance(ALGORITHM)
+        kpGenerator.initialize(spec.build())
         return kpGenerator.genKeyPair()
+    }
+
+    private fun createKeyPair(keyAlias: String): KeyPair {
+        val spec = KeyGenParameterSpec.Builder(
+                keyAlias,
+                KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
+        )
+        .setBlockModes(BLOCK_MODE)
+        .setEncryptionPaddings(PADDING)
+        .setRandomizedEncryptionRequired(false)
+        .setUserAuthenticationRequired(true)
+        .setUserAuthenticationValidityDurationSeconds(10)
+        .setCertificateSubject(X500Principal("CN=$keyAlias"))
+        .setDigests(KeyProperties.DIGEST_SHA256)
+        .setCertificateSerialNumber(BigInteger.valueOf(1))
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            spec.setInvalidatedByBiometricEnrollment(false)
+        }
+
+        val kpGenerator = KeyPairGenerator.getInstance(ALGORITHM)
+        kpGenerator.initialize(spec.build())
+        return kpGenerator.genKeyPair()
+    }
+
+    private fun createKey(keyAlias: String): KeyPair {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                return createKeyPairWithStrongBox(keyAlias)
+            }
+        } catch (e: StrongBoxUnavailableException) {
+            println("\n==> create key strongbox exception:")
+            println(e)
+        } catch (e: Exception) {
+            println("\n==> create key exception:")
+            println(e)
+        }
+
+        return createKeyPair(keyAlias)
     }
 
     private fun encrypt(keyAlias: String, input: ByteArray, password: String?): ByteArray {
