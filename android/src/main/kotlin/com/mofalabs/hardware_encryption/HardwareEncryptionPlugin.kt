@@ -32,8 +32,8 @@ class HardwareEncryptionPlugin : FlutterPlugin, MethodCallHandler {
     }
 
     private fun createRSAKeysIfNeeded(keyAlias: String, password: String?) {
-        var privateKey = keyStore.getKey(keyAlias, password?.toCharArray()) as PrivateKey
-        var publicKey = keyStore.getCertificate(keyAlias).publicKey
+        var privateKey = keyStore.getKey(keyAlias, password?.toCharArray())
+        var publicKey = keyStore.getCertificate(keyAlias)?.publicKey
 
         if (privateKey == null || publicKey == null) {
             createKey(keyAlias)
@@ -96,6 +96,7 @@ class HardwareEncryptionPlugin : FlutterPlugin, MethodCallHandler {
     private fun createKey(keyAlias: String): KeyPair {
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                println("\n==> createKeyPairWithStrongBox")
                 return createKeyPairWithStrongBox(keyAlias)
             }
         } catch (e: StrongBoxUnavailableException) {
