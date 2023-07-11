@@ -83,10 +83,7 @@ class HardwareEncryptionPlugin : FlutterPlugin, MethodCallHandler {
         .setCertificateSubject(X500Principal("CN=$keyAlias"))
         .setDigests(KeyProperties.DIGEST_SHA256)
         .setCertificateSerialNumber(BigInteger.valueOf(1))
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            spec.setInvalidatedByBiometricEnrollment(false)
-        }
+        .setInvalidatedByBiometricEnrollment(false)
 
         val kpGenerator = KeyPairGenerator.getInstance(ALGORITHM)
         kpGenerator.initialize(spec.build())
@@ -96,7 +93,6 @@ class HardwareEncryptionPlugin : FlutterPlugin, MethodCallHandler {
     private fun createKey(keyAlias: String): KeyPair {
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                println("\n==> createKeyPairWithStrongBox")
                 return createKeyPairWithStrongBox(keyAlias)
             }
         } catch (e: StrongBoxUnavailableException) {
