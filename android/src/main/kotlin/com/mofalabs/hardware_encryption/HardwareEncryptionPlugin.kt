@@ -5,6 +5,7 @@ import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.security.keystore.StrongBoxUnavailableException
 import androidx.annotation.NonNull
+import androidx.annotation.RequiresApi
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
@@ -49,6 +50,7 @@ class HardwareEncryptionPlugin : FlutterPlugin, MethodCallHandler {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.P)
     private fun createKeyPairWithStrongBox(keyAlias: String): KeyPair {
         val spec = KeyGenParameterSpec.Builder(
                 keyAlias,
@@ -58,18 +60,26 @@ class HardwareEncryptionPlugin : FlutterPlugin, MethodCallHandler {
         .setEncryptionPaddings(PADDING)
         .setRandomizedEncryptionRequired(false)
         .setUserAuthenticationRequired(true)
-        .setUserAuthenticationValidityDurationSeconds(10)
         .setCertificateSubject(X500Principal("CN=$keyAlias"))
         .setDigests(KeyProperties.DIGEST_SHA256)
         .setCertificateSerialNumber(BigInteger.valueOf(1))
         .setIsStrongBoxBacked(true)
         .setInvalidatedByBiometricEnrollment(false)
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            spec.setUserAuthenticationParameters(10, KeyProperties.AUTH_BIOMETRIC_STRONG)
+        } else {
+            spec.setUserAuthenticationValidityDurationSeconds(10)
+        }
+
         val kpGenerator = KeyPairGenerator.getInstance(ALGORITHM)
         kpGenerator.initialize(spec.build())
         return kpGenerator.genKeyPair()
     }
 
+    /**
+     * SDK version below Build.VERSION_CODES.P
+     */
     private fun createKeyPair(keyAlias: String): KeyPair {
         val spec = KeyGenParameterSpec.Builder(
                 keyAlias,
@@ -91,18 +101,17 @@ class HardwareEncryptionPlugin : FlutterPlugin, MethodCallHandler {
     }
 
     private fun createKey(keyAlias: String): KeyPair {
-        try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            try {
                 return createKeyPairWithStrongBox(keyAlias)
+            } catch (e: StrongBoxUnavailableException) {
+                println("\n==> create key strongbox exception:")
+                println(e)
+            } catch (e: Exception) {
+                println("\n==> create key exception:")
+                println(e)
             }
-        } catch (e: StrongBoxUnavailableException) {
-            println("\n==> create key strongbox exception:")
-            println(e)
-        } catch (e: Exception) {
-            println("\n==> create key exception:")
-            println(e)
         }
-
         return createKeyPair(keyAlias)
     }
 
