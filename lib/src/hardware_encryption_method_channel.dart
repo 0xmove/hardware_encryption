@@ -33,10 +33,7 @@ class MethodChannelHardwareEncryption extends HardwareEncryptionPlatform {
 
   @override
   Future<String> decrypt(String tag, String decryptText) async {
-    if (!(await BiometricUtil.checkAvailableBiometrics())) {
-      throw notSetError;
-    }
-    if (Platform.isAndroid) {
+    if (Platform.isIOS || Platform.isAndroid) {
       await BiometricUtil.checkBiometrics();
     }
     final result = await methodChannel.invokeMethod<dynamic>(

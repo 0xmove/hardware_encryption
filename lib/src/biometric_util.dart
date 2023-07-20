@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:local_auth/local_auth.dart';
 
@@ -7,22 +9,25 @@ class BiometricUtil {
   static LocalAuthentication auth = LocalAuthentication();
 
   static Future<bool> checkBiometrics() async {
-    bool result = false;
-    if (!(await BiometricUtil.checkAvailableBiometrics())) {
+    bool result = await BiometricUtil.checkAvailableBiometrics();
+    if (!result) {
       throw notSetError;
     }
-    final List<BiometricType> availableBiometrics =
-        await auth.getAvailableBiometrics();
-    if (availableBiometrics.contains(BiometricType.strong) ||
-        availableBiometrics.contains(BiometricType.face) ||
-        availableBiometrics.contains(BiometricType.fingerprint)) {
-      result = await auth.authenticate(
-        localizedReason: 'App needs to authenticate using faces.',
-        options: const AuthenticationOptions(
-          biometricOnly: true,
-          useErrorDialogs: true,
-        ),
-      );
+
+    if (Platform.isAndroid) {
+      final List<BiometricType> availableBiometrics =
+          await auth.getAvailableBiometrics();
+      if (availableBiometrics.contains(BiometricType.strong) ||
+          availableBiometrics.contains(BiometricType.face) ||
+          availableBiometrics.contains(BiometricType.fingerprint)) {
+        result = await auth.authenticate(
+          localizedReason: 'App needs to authenticate using faces.',
+          options: const AuthenticationOptions(
+            biometricOnly: true,
+            useErrorDialogs: true,
+          ),
+        );
+      }
     }
     return result;
   }
