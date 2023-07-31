@@ -125,10 +125,10 @@ class HardwareEncryptionPlugin : FlutterPlugin, MethodCallHandler {
         return cipher.doFinal(input)
     }
 
-    private fun decrypt(keyAlias: String, input: ByteArray, password: String?): ByteArray {
+    private fun decrypt(keyAlias: String, input: ByteArray, password: String?): ByteArray? {
         val privateKey = keyStore.getKey(keyAlias, password?.toCharArray())
         if (privateKey == null) {
-            createRSAKeysIfNeeded(keyAlias, password)
+            return null
         }
         val cipher = getRSACipher()
         cipher.init(Cipher.DECRYPT_MODE, privateKey)
