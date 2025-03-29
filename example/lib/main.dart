@@ -21,14 +21,14 @@ class _MyAppState extends State<MyApp> {
 
   var msg = 'this is a test message';
 
-  var tag = 'demotagkey';
+  var tag = 'key-tag';
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
         appBar: AppBar(
-          title: const Text('Plugin example app'),
+          title: const Text('Hardware Encryption'),
         ),
         body: Container(
           alignment: Alignment.center,
@@ -36,12 +36,10 @@ class _MyAppState extends State<MyApp> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const SizedBox(height: 15),
               ElevatedButton(
                 onPressed: () async {
                   _text1 = await _hardwareEncryption.encrypt(tag, msg);
                   setState(() {});
-                  print(_text1);
                 },
                 child: const Text('encrypt'),
               ),
@@ -61,7 +59,7 @@ class _MyAppState extends State<MyApp> {
                 onPressed: () async {
                   final result = await _hardwareEncryption.removeKey(tag);
                   setState(() {
-                    _text3 = 'removeKey $result';
+                    _text3 = 'remove ${result ? 'success' : 'failed'}';
                   });
                 },
                 child: const Text('remove'),

@@ -5,8 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 import 'biometric_util.dart';
-import 'encryption_error.dart';
-import 'hardware_encryption.dart';
+import 'exceptions.dart';
 import 'hardware_encryption_platform_interface.dart';
 
 /// An implementation of [HardwareSecurityPlatform] that uses method channels.
@@ -17,34 +16,40 @@ class MethodChannelHardwareEncryption extends HardwareEncryptionPlatform {
       'com.mofalabs.hardware_encryption/hardware_encryption');
 
   @override
-  Future<String> encrypt(String tag, String encryptText) async {
+  Future<String> encrypt(String tag, String plainText) async {
     final result = await methodChannel.invokeMethod<dynamic>(
       'encrypt',
       {
-        "message": Platform.isAndroid ? utf8.encode(encryptText) : encryptText,
+        "message": Platform.isAndroid ? utf8.encode(plainText) : plainText,
         'tag': tag,
       },
     );
     if (result == null) {
-      throw EncryptionError('encrypt fail');
+      throw const EncryptionException('Failed to encrypt data');
     }
     return base64.encode(result);
   }
 
   @override
-  Future<String> decrypt(String tag, String decryptText) async {
-    if (Platform.isIOS || Platform.isAndroid) {
-      await BiometricUtil.checkBiometrics();
+  Future<String> decrypt(String tag, String cipherText) async {
+    if (Platform.isIOS && !(await BiometricUtil.isBiometricAvailable())) {
+      throw BiometricsNotSetException();
     }
+
+    // Android biometric authentication is required before decrypting the cipher text
+    if (Platform.isAndroid && !(await BiometricUtil.authenticateAndroid())) {
+      throw BiometricsAuthenticationException();
+    }
+
     final result = await methodChannel.invokeMethod<dynamic>(
       'decrypt',
       {
-        "message": base64.decode(decryptText),
+        "message": base64.decode(cipherText),
         'tag': tag,
       },
     );
     if (result == null) {
-      throw EncryptionError('decrypt fail');
+      throw const EncryptionException('Failed to decrypt data');
     }
     return Platform.isAndroid
         ? utf8.decode(result as Uint8List)
@@ -58,7 +63,7 @@ class MethodChannelHardwareEncryption extends HardwareEncryptionPlatform {
       {"tag": tag},
     );
     if (result == null) {
-      throw EncryptionError('removeKey fail');
+      throw EncryptionException('Failed to remove key $tag');
     }
     return result as bool;
   }

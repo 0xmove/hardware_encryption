@@ -24,11 +24,11 @@ abstract class HardwareEncryptionPlatform extends PlatformInterface {
     _instance = instance;
   }
 
-  Future<String> encrypt(String tag, String encryptText) async {
+  Future<String> encrypt(String tag, String plainText) async {
     throw UnimplementedError('function encrypt has not been implemented.');
   }
 
-  Future<String> decrypt(String tag, String decryptText) async {
+  Future<String> decrypt(String tag, String cipherText) async {
     throw UnimplementedError('function decrypt has not been implemented.');
   }
 

@@ -67,7 +67,7 @@ public class HardwareEncryptionPlugin: NSObject, FlutterPlugin {
         }
         
         guard let secAttrApplicationTag = tag.data(using: .utf8) else {
-            throw CustomError.runtimeError("Invalid TAG") as Error
+            throw HardwareEncryptionError.runtimeError("Invalid TAG") as Error
         }
         
         var parameters: Dictionary<String, Any>
@@ -159,7 +159,7 @@ public class HardwareEncryptionPlugin: NSObject, FlutterPlugin {
         
         let algorithm: SecKeyAlgorithm = .eciesEncryptionCofactorVariableIVX963SHA256AESGCM
         guard SecKeyIsAlgorithmSupported(publicKey, .encrypt, algorithm) else {
-            throw CustomError.runtimeError("Encrypt algorithm not suppoort")
+            throw HardwareEncryptionError.runtimeError("Encrypt algorithm not suppoort")
         }
         
         var error: Unmanaged<CFError>?
@@ -182,7 +182,7 @@ public class HardwareEncryptionPlugin: NSObject, FlutterPlugin {
             if let secKeyTmp = try getSecKey(tag: tag, password: password, createIfNeed: false) {
                 secKey = secKeyTmp
             } else {
-                throw CustomError.runtimeError("SecKey not found")
+                throw HardwareEncryptionError.runtimeError("SecKey not found")
             }
         } catch {
             throw error
@@ -192,7 +192,7 @@ public class HardwareEncryptionPlugin: NSObject, FlutterPlugin {
         let cipherTextData = message as CFData
         
         guard SecKeyIsAlgorithmSupported(secKey, .decrypt, algorithm) else {
-            throw CustomError.runtimeError("Decrypt algorithm not supported")
+            throw HardwareEncryptionError.runtimeError("Decrypt algorithm not supported")
         }
         
         var error: Unmanaged<CFError>?
@@ -230,7 +230,7 @@ public class HardwareEncryptionPlugin: NSObject, FlutterPlugin {
 }
 
 
-enum CustomError: Error {
+enum HardwareEncryptionError: Error {
     
     case runtimeError(String)
     
