@@ -2,21 +2,28 @@ PODS:
   - FlutterMacOS (1.0.0)
   - hardware_encryption (0.0.1):
     - FlutterMacOS
+  - local_auth_darwin (0.0.1):
+    - Flutter
+    - FlutterMacOS
 
 DEPENDENCIES:
   - FlutterMacOS (from `Flutter/ephemeral`)
   - hardware_encryption (from `Flutter/ephemeral/.symlinks/plugins/hardware_encryption/macos`)
+  - local_auth_darwin (from `Flutter/ephemeral/.symlinks/plugins/local_auth_darwin/darwin`)
 
 EXTERNAL SOURCES:
   FlutterMacOS:
     :path: Flutter/ephemeral
   hardware_encryption:
     :path: Flutter/ephemeral/.symlinks/plugins/hardware_encryption/macos
+  local_auth_darwin:
+    :path: Flutter/ephemeral/.symlinks/plugins/local_auth_darwin/darwin
 
 SPEC CHECKSUMS:
   FlutterMacOS: 8f6f14fa908a6fb3fba0cd85dbd81ec4b251fb24
-  hardware_encryption: 40cdc0aea8c9e9c74c77918fad27df2743570ddb
+  hardware_encryption: 723f6cab5c5636bd42da9713485244bcf7575a33
+  local_auth_darwin: 553ce4f9b16d3fdfeafce9cf042e7c9f77c1c391
 
 PODFILE CHECKSUM: 236401fc2c932af29a9fcf0e97baeeb2d750d367
 
-COCOAPODS: 1.12.1
+COCOAPODS: 1.16.2
